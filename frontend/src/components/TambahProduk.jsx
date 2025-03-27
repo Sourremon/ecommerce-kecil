@@ -1,7 +1,7 @@
  // src/components/TambahProduk.jsx
  import React, { useState } from 'react';
  import axios from 'axios';
-function TambahProduk() {
+function TambahProduk({ addProduk }) {
   const [nama, setNama] = useState('');
   const [harga, setHarga] = useState('');
   const [error, setError] = useState('');
@@ -16,6 +16,9 @@ function TambahProduk() {
     axios.post('http://localhost:3001/produk', { nama, harga })
       .then((res) => {
         console.log('Produk berhasil ditambah:', res.data);
+        // Add the new product to the state
+        addProduk(res.data);
+        // Reset form
         setNama('');
         setHarga('');
       })

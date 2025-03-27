@@ -1,24 +1,27 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
-function ProdukList() {
-  const [produk, setProduk] = useState([]);
+function ProdukList({ produk, updateProduk, deleteProduk }) {
   const [editId, setEditId] = useState(null);
   const [editNama, setEditNama] = useState('');
   const [editHarga, setEditHarga] = useState('');
-
-  useEffect(() => {
-    axios.get('http://localhost:3001/produk')
-      .then((response) => setProduk(response.data))
-      .catch((error) => console.error(error));
-  }, []);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const handleDelete = (id) => {
     axios.delete(`http://localhost:3001/produk/${id}`)
       .then(() => {
-        setProduk(produk.filter((p) => p.id !== id));
+        deleteProduk(id);
+        setDeleteConfirm(null);
       })
       .catch(err => console.error(err));
+  };
+
+  const promptDelete = (id) => {
+    setDeleteConfirm(id);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirm(null);
   };
 
   const handleEdit = (item) => {
@@ -28,14 +31,18 @@ function ProdukList() {
   };
 
   const handleUpdate = () => {
+    const updatedProduk = {
+      id: editId,
+      nama: editNama,
+      harga: parseInt(editHarga)
+    };
+    
     axios.put(`http://localhost:3001/produk/${editId}`, {
       nama: editNama,
       harga: parseInt(editHarga),
     })
       .then(() => {
-        setProduk(produk.map((p) => 
-          p.id === editId ? { ...p, nama: editNama, harga: parseInt(editHarga) } : p
-        ));
+        updateProduk(updatedProduk);
         setEditId(null);
         setEditNama('');
         setEditHarga('');
@@ -50,14 +57,26 @@ function ProdukList() {
         {produk.map((item) => (
           <li key={item.id}>
             {item.nama} - Rp{item.harga}
-            <button onClick={() => handleEdit(item)}>Edit</button>
-            <button onClick={() => handleDelete(item.id)}>Delete</button>
+            <div className="button-group">
+              <button onClick={() => handleEdit(item)}>Edit</button>
+              <button onClick={() => promptDelete(item.id)}>Delete</button>
+            </div>
+            
+            {deleteConfirm === item.id && (
+              <div className="delete-confirm">
+                <p>Yakin ingin menghapus produk ini?</p>
+                <div className="button-group">
+                  <button onClick={() => handleDelete(item.id)}>Ya</button>
+                  <button onClick={cancelDelete}>Tidak</button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
 
       {editId && (
-        <div>
+        <div className="edit-form">
           <h3>Edit Produk</h3>
           <input
             type="text"
@@ -71,8 +90,10 @@ function ProdukList() {
             value={editHarga}
             onChange={(e) => setEditHarga(e.target.value)}
           />
-          <button onClick={handleUpdate}>Update</button>
-          <button onClick={() => setEditId(null)}>Cancel</button>
+          <div className="button-group">
+            <button onClick={handleUpdate}>Update</button>
+            <button onClick={() => setEditId(null)}>Cancel</button>
+          </div>
         </div>
       )}
     </div>
